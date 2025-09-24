@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <time.h>
 
 typedef enum
 {
@@ -34,7 +35,7 @@ DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile)
 
     if (toFile == true)
     {
-        debug.logfile = fopen(pathLogfile, "w");
+        debug.logfile = fopen(pathLogfile, "a");
         if (!debug.logfile)
         {
             fprintf(stderr, "Failed to open logfile [%s]", pathLogfile);
@@ -88,12 +89,20 @@ void DebugLog(DebugS *debug, LogLevel lvl, const char *fmt, ...)
     vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
 
+    char currentTime[128] = "";
+    if (debug->isTimeEnabled)
+    {
+        time_t now = time(NULL);
+        struct tm *t = localtime(&now);
+        strftime(currentTime, sizeof(currentTime), "[%H:%M:%S] ", t);
+    }
+
     char final[2048];
-    snprintf(final, sizeof(final), "[%s]: %s \n", debugLvl[lvl], buffer);
+    snprintf(final, sizeof(final), "%s[%s]: %s \n", currentTime, debugLvl[lvl], buffer);
 
     if (debug->isConsoleEnabled)
     {
-        fprintf(stderr, "%s%s\x1b[0m", final);
+        fprintf(stderr, "%s%s\x1b[0m", colorMode, final);
     }
     if (debug->logfile)
     {
