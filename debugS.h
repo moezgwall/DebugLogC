@@ -7,6 +7,23 @@
 #include <time.h>
 #include <string.h>
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+#define COMPILER_INFO \
+    "Compiled on " __DATE__ " at " __TIME__ \
+    " using " COMPILER_NAME
+
+#if defined(__clang__)
+    #define COMPILER_NAME "Clang " __clang_version__
+#elif defined(__GNUC__)
+    #define COMPILER_NAME "GCC " __VERSION__
+#elif defined(_MSC_VER)
+    #define COMPILER_NAME "MSVC"
+#else
+    #define COMPILER_NAME "Unknown Compiler"
+#endif
+
 typedef enum
 {
     LOG_INFO,
@@ -29,6 +46,7 @@ typedef struct
 DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile);
 void EndDebugMode(DebugS *debug);
 void DebugLog(DebugS *debug, LogLevel lvl, const char *fmt, ...);
+void DebugPrintBuildInfo(DebugS *debug);
 DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile)
 {
     DebugS debug = {0};
@@ -121,6 +139,20 @@ void DebugLog(DebugS *debug, LogLevel lvl, const char *fmt, ...)
     {
         debug->customOutput(finalMsg);
     }
+}
+
+void DebugPrintBuildInfo(DebugS *debug)
+{
+    DebugLog(debug, LOG_INFO, "=== Build Info ===");
+    DebugLog(debug, LOG_INFO, "Compiler: %s", COMPILER_NAME);
+    DebugLog(debug, LOG_INFO, "Date    : %s", __DATE__);
+    DebugLog(debug, LOG_INFO, "Time    : %s", __TIME__);
+
+    #ifdef DEBUG
+        DebugLog(debug, LOG_INFO, "Build   : DEBUG");
+    #else
+        DebugLog(debug, LOG_INFO, "Build   : RELEASE");
+    #endif
 }
 
 #endif
