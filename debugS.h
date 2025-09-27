@@ -6,22 +6,34 @@
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
-#define COMPILER_INFO \
+#define COMPILER_INFO                       \
     "Compiled on " __DATE__ " at " __TIME__ \
     " using " COMPILER_NAME
 
 #if defined(__clang__)
-    #define COMPILER_NAME "Clang " __clang_version__
+#define COMPILER_NAME "Clang " __clang_version__
 #elif defined(__GNUC__)
-    #define COMPILER_NAME "GCC " __VERSION__
+#define COMPILER_NAME "GCC " __VERSION__
 #elif defined(_MSC_VER)
-    #define COMPILER_NAME "MSVC"
+#define COMPILER_NAME "MSVC"
 #else
-    #define COMPILER_NAME "Unknown Compiler"
+#define COMPILER_NAME "Unknown Compiler"
+#endif
+
+#ifdef DEBUG
+#define DEBUG_ASSERT(DebugS, cond, msg)                                          \
+    do                                                                           \
+    {                                                                            \
+        if (!(cond))                                                             \
+            DebugAssertFail((DebugS), #cond, __FILE__, __LINE__, __func__, msg); \
+    } while (0)
+#else
+#define DEBUG_ASSERT(DebugS, cond, msg) ((void)0)
 #endif
 
 typedef enum
@@ -54,7 +66,7 @@ DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile)
     debug.isFileEnabled = toFile;
     debug.isTimeEnabled = true;
     debug.loglvl = LOG_INFO;
-    debug.customOuput = NULL;
+    debug.customOutput = NULL;
 
     if (toFile == true)
     {
@@ -137,7 +149,7 @@ void DebugLog(DebugS *debug, LogLevel lvl, const char *fmt, ...)
     }
     if (debug->customOutput)
     {
-        debug->customOutput(finalMsg);
+        debug->customOutput(final);
     }
 }
 
@@ -148,11 +160,31 @@ void DebugPrintBuildInfo(DebugS *debug)
     DebugLog(debug, LOG_INFO, "Date    : %s", __DATE__);
     DebugLog(debug, LOG_INFO, "Time    : %s", __TIME__);
 
-    #ifdef DEBUG
-        DebugLog(debug, LOG_INFO, "Build   : DEBUG");
-    #else
-        DebugLog(debug, LOG_INFO, "Build   : RELEASE");
-    #endif
+#ifdef DEBUG
+    DebugLog(debug, LOG_INFO, "Build   : DEBUG");
+#else
+    DebugLog(debug, LOG_INFO, "Build   : RELEASE");
+#endif
+}
+
+void DebugAssertFail(DebugS *debug, const char *expr, const char *file, int line,
+                     const char *func, const char *msg)
+{
+    if (debug)
+    {
+        DebugLog(debug, LOG_ERROR,
+                 "ASSERTION FAILED at %s:%d in %s()\n  -> %s\n  -> Expression: %s",
+                 file, line, func, msg, expr);
+    }
+    else
+    {
+        // directly to stderr
+        fprintf(stderr,
+                "\x1b[31m[ASSERTION FAILED] at %s:%d in %s()\n  -> %s\n  -> Expression: %s\x1b[0m\n",
+                file, line, func, msg, expr);
+    }
+
+    abort();
 }
 
 #endif
