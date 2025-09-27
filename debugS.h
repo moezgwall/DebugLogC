@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <time.h>
+#include <string.h>
 
 typedef enum
 {
@@ -21,6 +22,8 @@ typedef struct
     bool isConsoleEnabled;
     bool isFileEnabled;
     bool isTimeEnabled;
+    LogLevel loglvl;
+    void (*customOutput)(const char *msg); // a callback to make your customMsgs
 } DebugS;
 
 DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile);
@@ -32,6 +35,8 @@ DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile)
     debug.isConsoleEnabled = toConsole;
     debug.isFileEnabled = toFile;
     debug.isTimeEnabled = true;
+    debug.loglvl = LOG_INFO;
+    debug.customOuput = NULL;
 
     if (toFile == true)
     {
@@ -111,6 +116,10 @@ void DebugLog(DebugS *debug, LogLevel lvl, const char *fmt, ...)
             fprintf(debug->logfile, "%s", final);
             fflush(debug->logfile);
         }
+    }
+    if (debug->customOutput)
+    {
+        debug->customOutput(finalMsg);
     }
 }
 
