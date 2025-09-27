@@ -59,6 +59,8 @@ DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile);
 void EndDebugMode(DebugS *debug);
 void DebugLog(DebugS *debug, LogLevel lvl, const char *fmt, ...);
 void DebugPrintBuildInfo(DebugS *debug);
+void DebugAssertFail(DebugS *debug, const char *expr, const char *file, int line,const char *func, const char *msg);
+
 DebugS DebugInit(const char *pathLogfile, bool toConsole, bool toFile)
 {
     DebugS debug = {0};
